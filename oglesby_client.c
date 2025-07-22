@@ -11,7 +11,7 @@
 
 char* takeInput(){
   char buffer[bufferSize];
-  fget(buffer, bufferSize, stdin);
+  fget(buffer, bufferSize + 1, stdin);
   return buffer;
 }
 
@@ -40,8 +40,13 @@ int main(){
   }
   
   while(true){
-    char *message = takeInput();
-    uint8_t size = sizeof(message); //sizeof(char) = 1
+    char *tempMessage = takeInput();
+    uint8_t size = strlen(message); //sizeof(char) = 1
+    char* justMessage = malloc(size);
+    memcpy(justMessage, tempMessage, size);
+    free(tempMessage);
+    tempMessage = NULL;
+    
     //send size of next message
     send(client_fd, size, sizeof(size), 0);
 
