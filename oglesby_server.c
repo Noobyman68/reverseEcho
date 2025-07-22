@@ -29,7 +29,7 @@ int strEquals(char *arr){
 
 int main(){
   int server_fd, new_socket;
-  ssize_t valread;
+  ssize_t byteNum;
   struct sockaddr_in address;
   int opt = 1 
   sockelen_t addrlen = sizeof(address);
@@ -70,11 +70,11 @@ int main(){
     fail();
   }
 
-  uint32_t msg_len, total, byteNum;
+  uint8_t msg_len, total;
   while(true){
     //first message is size of data for next message
     recv(new_socket, &msg_len, sizeof(msg_len), 0);
-    msg_len = ntohl(len); //ntohl() converts byte order from network to host
+    //msg_len = ntohl(len); //ntohl() converts byte order from network to host
 
     //msg_len should only be message
     char *buffer = malloc(msg_len);
@@ -93,4 +93,7 @@ int main(){
     revStr = NULL;
     buffer = NULL;
   }
+  close(server_fd);
+  close(new_socket);
+  return 0;
 }
