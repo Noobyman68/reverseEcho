@@ -1,15 +1,17 @@
 #include <sys/socket.h>
 #include <stdlib.h>
-#include <unitstd.h>
+#include <unistd.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <stdint.h>
+#include <stdbool.h>
+#include <stdio.h>
 #define PORT 5000
 #define fail() exit(EXIT_FAILURE)
 
 char* reverseStr(char *arrIn, int len){
   char *arrNew = malloc(len); //sizeof(char) = 1
-  for(int i = len-1, i > -1, i--){
+  for(int i = len-1; i > -1; i--){
     *arrNew = arrIn[i];
     arrNew++;
   }
@@ -31,8 +33,8 @@ int main(){
   int server_fd, new_socket;
   ssize_t byteNum;
   struct sockaddr_in address;
-  int opt = 1 
-  sockelen_t addrlen = sizeof(address);
+  int opt = 1; 
+  socklen_t addrlen = sizeof(address);
 
 //socket functions wrapped in if statements for error checking
 
@@ -65,7 +67,7 @@ int main(){
   }
 
 
-  if((new_socket = accept(server_fd, (struct sockaddr*)&address, *addrlen)) < 0){
+  if((new_socket = accept(server_fd, (struct sockaddr*)&address, &addrlen)) < 0){
     perror("connection failed");
     fail();
   }
