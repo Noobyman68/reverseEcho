@@ -2,16 +2,17 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <stdio.h>
-#include <arpa/init.h>
+#include <arpa/inet.h>
 #include <stdint.h>
 #include <string.h>
+#include <stdbool.h>
 #define PORT 5000
 #define fail() exit(EXIT_FAILURE)
 #define bufferSize 256
 
 char* takeInput(){
-  char buffer[bufferSize];
-  fget(buffer, bufferSize + 1, stdin);
+  char *buffer = malloc(bufferSize);
+  fgets(buffer, bufferSize + 1, stdin);
   return buffer;
 }
 
@@ -41,7 +42,7 @@ int main(){
   
   while(true){
     char *tempMessage = takeInput();
-    uint8_t size = strlen(message); //sizeof(char) = 1
+    uint8_t size = strlen(tempMessage); //sizeof(char) = 1
     char* justMessage = malloc(size);
     memcpy(justMessage, tempMessage, size);
     free(tempMessage);
