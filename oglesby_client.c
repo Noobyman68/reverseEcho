@@ -1,73 +1,98 @@
-#include <sys/socket.h>
-#include <stdlib.h>
-#include <unistd.h>
+#include <windows.h>
+#include <winsock2.h>
+#include <ws2tcpip.h>
 #include <stdio.h>
-#include <arpa/inet.h>
-#include <stdint.h>
-#include <string.h>
+#include <stdlib.h>
 #include <stdbool.h>
+#define WIN#@_LEAN_AND_MEAN
+#define buffer_size 256
 #define PORT 5000
-#define fail() exit(EXIT_FAILURE)
-#define bufferSize 256
+#define IP 127.0.0.1
 
-char* takeInput(){
-  char *buffer = malloc(bufferSize);
-  fgets(buffer, bufferSize + 1, stdin);
-  return buffer;
+#pragma comment (lib, "Ws2_32.lib")
+#pragma comment (lib, "Mswsock.lib")
+#pragma comment (lib, "AdvApi32.lib")
+
+
+int takeInput(char *message){
+  fgets(message, buffer_size+1, stdin);
+  return strlen(message);
+}
+void clear(char *arr, int size){
+  for(int i = 0; i < size, i++){
+    arr[i] = '\0';
+  }
 }
 
 
 int main(){
-  int status, client_fd;
-  struct sockaddr_in serv_addr;
-  
+  WSADATA wsaData;
+  SOCKET socket = INVALID_SOCKET;
+  struct sockaddr_in serverAddr;
+  char message[buffer_size];
+  int iResult;
 
-  if((client_fd = socket(AF_INET, SOCK_STREAM, 0)) < 0){
-    printf("Socket client creation error\n");
-    return -1;
+  if(WSAStartup(MAKEWORD(2,2), &wsaData) != 0){
+    printf("WSAStartup failed");
+    return 1;
+  }
+   
+//create socket
+  if((c_socket = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP)) == INVLAID_SOCKET){
+    printf("socket creation failed");
+    WSACleanup();
+    return 1;
   }
 
-  serv_addr.sin_family = AF_INET;
-  serv_addr.sin_port = htons(PORT);
-
-  if(inet_pton(AF_INET, "127.0.0.1", &serv_addr.sin_addr) <= 0){
-    printf("Invalid address/ Address not supported\n");
-    return -1;
+  serverAddr.sin_family = AF_INET;
+  serverAddr.sin_port = htons(PORT);
+  if(inet_pton(AF_INET, serverIP, &serverAddr.sin_addr) <= 0){
+    printf("invalid address");
+    closesocket(c_socket);
+    WSACleanup();
+    return 1;
   }
 
-  if((status = connect(client_fd, (struct sockaddr*) &serv_addr, sizeof(serv_addr))) < 0){
-    printf("Connection Failed\n");
-    return -1;
+//connet to server
+  if(connect(c_socket, (struct sockaddr*) &serverAddr, sizeof(serverAddr)) == SOCKET_ERROR){
+    printf("server connection failed");
+    closesocket(c_socket);
+    WSACleanup();
+    return 1;
   }
-  
+
+
   while(true){
-    char *tempMessage = takeInput();
-    uint8_t size = strlen(tempMessage); //sizeof(char) = 1
-    char* justMessage = malloc(size);
-    memcpy(justMessage, tempMessage, size);
-    free(tempMessage);
-    tempMessage = NULL;
-    
-    //send size of next message
-    send(client_fd, size, sizeof(size), 0);
-
-    //send message
-    send(client_fd, message, size, 0);
-
+    int size = takeInput(message);
     char *buffer = malloc(size);
-    byteNum = recv(client_fd,buffer, size,0);
 
-    free(message);
-    message = NULL;
-
-    for(int i = 0; i < size; i++){
-      printf(buffer[i]);
+    if((iResult = send(c_socket, size, 4, 0)) == SOCKET_ERROR){
+      printf("size send failed");
+      closesocket(c_socket);
+      WSACleanup();
+      return 1;
     }
-    printf("\n");
-    if(strEqual(buffer)){
-      break;
+    if((iResult = send(c_socket, message, size, 0)) == SOCKET_ERROR){
+      printf("message send failed");
+      closesocket(c_socket);
+      WSACleanup();
+      return 1;
     }
+    if((iResult = recv(c_socket, buffer, buffer_size, 0)) > 0){
+      buffer[iResult] = '\0';
+      printf("revered message: %s", buffer);
+    }else if(iResult == 0){
+      printf("connection closed");
+      return 0;
+    }else{
+      printf("recieve failed");
+      closesocket(c_socket);
+      WSACleanup();
+      return 1;
+    }
+    clear(message, size);
+    free(buffer);
+    buffer = NULL;
   }
-  close(client_fd);
-  return 0;
+
 }
